@@ -16,7 +16,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 100
+    num_episodes = 1_000
     max_memory = 1000
 
     # init environment
@@ -34,13 +34,13 @@ def main():
     dqn.init_memory_replay(memory)
 
     for i in range(num_episodes):
+        if i % 10 == 0:
+            print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
+
         _ = env.reset()
         S = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
 
         dqn.update_epsilon()
-
-        if i % 10 == 0:
-            print(f"Episode: {i}, Epsilon: {dqn.epsilon}, Reward: {env.reward_running}")
         
         while True:
             A = dqn.get_action(S)

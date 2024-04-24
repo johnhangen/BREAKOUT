@@ -13,11 +13,12 @@ import gym
 from gym.utils.play import play
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Union
 
 
 class BreakoutEnvAgent():
     
-    def __init__(self, render_mode:str='human', seed:int=0, plot_rewards_bool: bool = True) -> None:
+    def __init__(self, render_mode: Union[str, None] = None, seed:int=0, plot_rewards_bool: bool = True) -> None:
         # MDP environment
         self.observation = None
         self.info = None
@@ -26,8 +27,8 @@ class BreakoutEnvAgent():
         self.truncated: bool = None
 
         # make the environment
-        self._seed = seed
-        self.render_mode = render_mode
+        self._seed: int = seed
+        self.render_mode: bool = render_mode
 
         # graphing vars
         self.plot_rewards_bool = plot_rewards_bool

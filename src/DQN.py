@@ -15,26 +15,22 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 import numpy as np
+import torch.utils
 
 from src.memory_replay import MemoryReplay
 
 class DQN(nn.Module):
     def __init__(self, n_obs, n_action):
         super(DQN, self).__init__()
-        self.flatten = nn.Flatten()
-        self.stack = nn.Sequential(
-            nn.Linear(n_obs, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-            nn.Linear(64, n_action)
-        )
+        self.linear1 = nn.Linear(n_obs, 128)
+        self.linear2 = nn.Linear(128, 128)
+        self.linear3 = nn.Linear(128, n_action)
 
     def forward(self, x):
-        x = self.flatten(x)
-        logits = self.stack(x)
-
-        return logits
+        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear2(x))
+        x = self.linear3(x)
+        return x
 
 
 class DQN_Network():
@@ -47,8 +43,8 @@ class DQN_Network():
         self.alpha: float = 0.0001
         self.epsilon: float = 1.0
         self.epsilon_min: float = 0.1
-        self.epsilon_decay: float = 0.999
-        self.batch_size: int = 32
+        self.epsilon_decay: float = 0.001
+        self.batch_size: int = 1000
         self.memory_size: int = 10_000
         self.C:int = 500
 
@@ -80,7 +76,7 @@ class DQN_Network():
         self.init_optimizer()
 
     def update_epsilon(self) -> None:
-        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+        self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
     def get_action(self, state:torch.Tensor) -> int:
         if np.random.rand() < self.epsilon:
@@ -101,14 +97,16 @@ class DQN_Network():
         R = torch.tensor(R).to(self.device)
         S_prime = torch.cat(S_prime).to(self.device)
 
-        Q = self.policy_network(S).gather(1, A.unsqueeze(1)).squeeze(1)
+        Q = self.policy_network(S).gather(1, A.unsqueeze(1))
         Q_prime = self.target_network(S_prime).max(1)[0].detach()
 
         target = R + self.gamma * Q_prime
-        loss = F.smooth_l1_loss(Q, target)
+        loss = F.smooth_l1_loss(Q, target.unsqueeze(1))
 
         self.optimizer.zero_grad()
         loss.backward()
+
+        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 1)
         self.optimizer.step()
 
     def update_target_network(self, t: int = 0) -> None:
