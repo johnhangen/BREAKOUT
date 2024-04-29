@@ -14,7 +14,10 @@ from gym.utils.play import play
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Union
+from skimage.transform import resize
 
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class BreakoutEnvAgent():
     
@@ -72,7 +75,7 @@ class BreakoutEnvAgent():
         return self.env.reward_range
     
     def convert_observation(self) -> np.array:
-        return np.dot(self.observation, [0.299, 0.587, 0.114]).flatten()
+        return resize(np.dot(self.observation, [0.299, 0.587, 0.114]), (84, 84)).flatten()
     
     def step(self, action:int) -> tuple:
         self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
@@ -82,14 +85,20 @@ class BreakoutEnvAgent():
     def quit(self) -> None:
         self.env.close()
 
+    #TODO: get screenshots of the game
+
+    #TODO: create gif from screenshots
+
     def plot_rewards(self, show: bool = True, save: bool = True) -> None:
+        # TODO: do an optional rolling average
+        # TODO: go to ggplot style
         plt.plot(self.rewards)
         plt.title('Breakout Rewards')
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
 
         if save:
-            plt.savefig('breakout_rewards.png')
+            plt.savefig('figs/breakout_rewards.png')
 
         if show:
             plt.show()        
@@ -107,7 +116,9 @@ class BreakoutEnvPlayer():
 
 
 def main():
-    env = BreakoutEnvAgent()
+    env = BreakoutEnvAgent(
+        render_mode='human'
+    )
 
     env.init_environment()
 

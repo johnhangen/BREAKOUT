@@ -2,9 +2,9 @@
 
 #############################################
 
-# BreakoutEnv class
+# DQN class
 
-# This class is used to create the Breakout environment.
+# This class is used to create the DQN.
 
 #############################################
 
@@ -19,6 +19,10 @@ import torch.utils
 
 from src.memory_replay import MemoryReplay
 
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
+# TODO: Implement the CNN from the paper
 class DQN(nn.Module):
     def __init__(self, n_obs, n_action):
         super(DQN, self).__init__()
@@ -113,6 +117,20 @@ class DQN_Network():
         if t % self.C == 0:
             pass
             #self.target_network.load_state_dict(self.policy_network.state_dict())
+
+    #TODO: I would like a method so the user can see a frame of the game
+
+    def save_policy_network(self, path:str) -> None:
+        torch.save(self.policy_network.state_dict(), path)
+
+    def load_policy_network(self, path:str) -> None:
+        self.policy_network.load_state_dict(torch.load(path))
+    
+    def save_target_network(self, path:str) -> None:
+        torch.save(self.target_network.state_dict(), path)
+    
+    def load_target_network(self, path:str) -> None:
+        self.target_network.load_state_dict(torch.load(path))
             
     
 
