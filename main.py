@@ -50,8 +50,8 @@ def main():
         dqn.update_epsilon()
         
         while True:
+            env.screenshot()
             A = dqn.get_action(S)
-            print(dqn.observation_space, dqn.action_space, A)
 
             S_prime, R, _, _, _ = env.step(A)
             S_prime = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)

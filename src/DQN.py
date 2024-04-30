@@ -115,8 +115,7 @@ class DQN_Network():
 
     def update_target_network(self, t: int = 0) -> None:
         if t % self.C == 0:
-            pass
-            #self.target_network.load_state_dict(self.policy_network.state_dict())
+            self.target_network.load_state_dict(self.policy_network.state_dict())
 
     #TODO: I would like a method so the user can see a frame of the game
 

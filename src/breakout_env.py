@@ -85,7 +85,11 @@ class BreakoutEnvAgent():
     def quit(self) -> None:
         self.env.close()
 
-    #TODO: get screenshots of the game
+    def screenshot(self, save:bool = True) -> None:
+        plt.imshow(self.observation)
+
+        if save:
+            plt.savefig('figs/breakout_screenshot.png')
 
     #TODO: create gif from screenshots
 
