@@ -23,13 +23,13 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class DQN(nn.Module):
-    def __init__(self, n_obs, n_action):
+    def __init__(self):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(3136*512, 512)  
-        self.fc2 = nn.Linear(512, n_action)
+        self.fc1 = nn.Linear(49, 49)  
+        self.fc2 = nn.Linear(49, 4)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -77,8 +77,8 @@ class DQN_Network():
         self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.alpha)
 
     def init_networks(self) -> None:
-        self.policy_network = DQN(self.observation_space, self.action_space).to(self.device)
-        self.target_network = DQN(self.observation_space, self.action_space).to(self.device)
+        self.policy_network = DQN().to(self.device)
+        self.target_network = DQN().to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
 
         self.init_optimizer()
@@ -97,25 +97,32 @@ class DQN_Network():
         if len(self.memory) < self.batch_size:
             return
 
-        batch = self.memory.sample(self.batch_size)
-        S, A, R, S_prime = zip(*batch)
+        # Sample random minibatch of transitions from D
+        batches = self.memory.sample(self.batch_size)
+        
+        #S, A, R, S_prime = zip(*batch)
 
-        S = torch.cat(S).to(self.device)
-        A = torch.tensor(A, dtype=torch.int64).to(self.device)
-        R = torch.tensor(R).to(self.device)
-        S_prime = torch.cat(S_prime).to(self.device)
+        #S = torch.cat(S).to(self.device)
+        #A = torch.tensor(A, dtype=torch.int64).to(self.device)
+        #R = torch.tensor(R).to(self.device)
+        #S_prime = torch.cat(S_prime).to(self.device)
 
-        Q = self.policy_network(S).gather(1, A.unsqueeze(1))
-        Q_prime = self.target_network(S_prime).max(1)[0].detach()
+        # TODO: make batch trainning work
+        for _, batch in enumerate(batches):
+            S, A, R, S_prime = batch
 
-        target = R + self.gamma * Q_prime
-        loss = F.smooth_l1_loss(Q, target.unsqueeze(1))
+            # compute Q(s_t, a)
+            Q = self.policy_network(S)[:, A]
+            Q_prime = self.target_network(S_prime).max(1)[0].detach()
 
-        self.optimizer.zero_grad()
-        loss.backward()
+            target = R + self.gamma * Q_prime
+            loss = F.smooth_l1_loss(Q, target)
 
-        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 1)
-        self.optimizer.step()
+            self.optimizer.zero_grad()
+            loss.backward()
+
+            torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
+            self.optimizer.step()
 
     def update_target_network(self, t: int = 0) -> None:
         if t % self.C == 0:

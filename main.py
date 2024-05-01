@@ -23,7 +23,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 5_000
+    num_episodes = 100
     max_memory = 1000
 
     # init environment
@@ -56,6 +56,7 @@ def main():
             S_prime = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
 
             R = torch.tensor(R, dtype=torch.float32, device=dqn.device)
+            assert A <= n_actions
             memory.add((S, A, R, S_prime))
 
             dqn.minibatch_update()
