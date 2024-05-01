@@ -23,7 +23,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 1_000
+    num_episodes = 5_000
     max_memory = 1000
 
     # init environment
@@ -50,7 +50,6 @@ def main():
         dqn.update_epsilon()
         
         while True:
-            env.screenshot()
             A = dqn.get_action(S)
 
             S_prime, R, _, _, _ = env.step(A)

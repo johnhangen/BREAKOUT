@@ -22,18 +22,22 @@ from src.memory_replay import MemoryReplay
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-# TODO: Implement the CNN from the paper
 class DQN(nn.Module):
     def __init__(self, n_obs, n_action):
         super(DQN, self).__init__()
-        self.linear1 = nn.Linear(n_obs, 128)
-        self.linear2 = nn.Linear(128, 128)
-        self.linear3 = nn.Linear(128, n_action)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
+        self.fc1 = nn.Linear(3136*512, 512)  
+        self.fc2 = nn.Linear(512, n_action)
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
-        x = F.relu(self.linear2(x))
-        x = self.linear3(x)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = x.view(x.size(0), -1) 
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return x
 
 
@@ -116,8 +120,6 @@ class DQN_Network():
     def update_target_network(self, t: int = 0) -> None:
         if t % self.C == 0:
             self.target_network.load_state_dict(self.policy_network.state_dict())
-
-    #TODO: I would like a method so the user can see a frame of the game
 
     def save_policy_network(self, path:str) -> None:
         torch.save(self.policy_network.state_dict(), path)

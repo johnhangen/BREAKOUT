@@ -16,8 +16,10 @@ import matplotlib.pyplot as plt
 from typing import Union
 from skimage.transform import resize
 
+# housekeeping
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+plt.style.use('ggplot')
 
 class BreakoutEnvAgent():
     
@@ -75,7 +77,7 @@ class BreakoutEnvAgent():
         return self.env.reward_range
     
     def convert_observation(self) -> np.array:
-        return resize(np.dot(self.observation, [0.299, 0.587, 0.114]), (84, 84)).flatten()
+        return resize(np.dot(self.observation, [0.299, 0.587, 0.114]), (84, 84))
     
     def step(self, action:int) -> tuple:
         self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
@@ -93,10 +95,10 @@ class BreakoutEnvAgent():
 
     #TODO: create gif from screenshots
 
-    def plot_rewards(self, show: bool = True, save: bool = True) -> None:
-        # TODO: do an optional rolling average
-        # TODO: go to ggplot style
-        plt.plot(self.rewards)
+    def plot_rewards(self, bin_size:int = 1, show: bool = True, save: bool = True) -> None:
+        rewards_rolling_average = np.convolve(self.rewards, np.ones(bin_size), 'valid') / bin_size
+        
+        plt.plot(rewards_rolling_average)
         plt.title('Breakout Rewards')
         plt.xlabel('Episodes')
         plt.ylabel('Rewards')
