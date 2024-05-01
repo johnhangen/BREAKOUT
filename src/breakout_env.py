@@ -85,11 +85,11 @@ class BreakoutEnvAgent():
     def quit(self) -> None:
         self.env.close()
 
-    def screenshot(self, save:bool = True) -> None:
+    def screenshot(self, save:bool = True, file_path:str = 'figs/breakout_screenshot.png') -> None:
         plt.imshow(self.observation)
 
         if save:
-            plt.savefig('figs/breakout_screenshot.png')
+            plt.savefig(file_path)
 
     #TODO: create gif from screenshots
 
