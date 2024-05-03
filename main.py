@@ -41,7 +41,7 @@ def main():
     dqn.init_memory_replay(memory)
 
     for i in range(num_episodes):
-        if i % 10 == 0:
+        if i % 10 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
 
         _ = env.reset()

@@ -91,7 +91,7 @@ class DQN_Network():
             return np.random.randint(0, self.action_space)
         else:
             with torch.no_grad():
-                return torch.argmax(self.policy_network(state)).item()
+                return torch.mode(self.policy_network(state).max(1).indices).values.item()
             
     def minibatch_update(self) -> None:
         if len(self.memory) < self.batch_size:
@@ -100,11 +100,6 @@ class DQN_Network():
         # Sample random minibatch of transitions from D
         batches = self.memory.sample(self.batch_size)
         
-        #S, A, R, S_prime = zip(*batch)
-
-        #S = torch.cat(S).to(self.device)
-        #A = torch.tensor(A, dtype=torch.int64).to(self.device)
-        #R = torch.tensor(R).to(self.device)
         #S_prime = torch.cat(S_prime).to(self.device)
 
         # TODO: make batch trainning work
