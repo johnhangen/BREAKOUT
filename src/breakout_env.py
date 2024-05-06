@@ -93,6 +93,12 @@ class BreakoutEnvAgent():
         if save:
             plt.savefig(file_path)
 
+    def screenshot_of_convert(self, save:bool = True, file_path:str = 'figs/breakout_screenshot_converted.png') -> None:
+        plt.imshow(self.convert_observation())
+
+        if save:
+            plt.savefig(file_path)
+
     #TODO: create gif from screenshots
 
     def plot_rewards(self, bin_size:int = 1, show: bool = True, save: bool = True) -> None:

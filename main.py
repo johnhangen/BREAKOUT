@@ -12,8 +12,11 @@ from src.memory_replay import MemoryReplay
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import torch
+
+import time
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -23,8 +26,25 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 100
+    num_episodes = 10
     max_memory = 1000
+
+    # init database
+    df = pd.DataFrame(
+        columns=[
+        "Episode",
+        "Epsilon Value",
+        "gamma",
+        "alpha",
+        "epsilon",
+        "epsilon_min",
+        "epsilon_decay",
+        "batch_size",
+        "C",
+        "Memory Size",
+        "Rewards",
+        "Wall Time"
+    ])
 
     # init environment
     env = BreakoutEnvAgent()
@@ -40,6 +60,8 @@ def main():
     memory = MemoryReplay(max_memory=max_memory)
     dqn.init_memory_replay(memory)
 
+    start = time.time()
+
     for i in range(num_episodes):
         if i % 10 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
@@ -48,12 +70,16 @@ def main():
         S = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
 
         dqn.update_epsilon()
+
+        running_rewards = 0
         
         while True:
             A = dqn.get_action(S)
 
             S_prime, R, _, _, _ = env.step(A)
             S_prime = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
+
+            running_rewards += R
 
             R = torch.tensor(R, dtype=torch.float32, device=dqn.device)
             assert A <= n_actions
@@ -68,7 +94,22 @@ def main():
             if env.terminated or env.truncated:
                 break
 
+    df_DQN = df_DQN._append({
+        "Episode": i,
+        "Epsilon Value": dqn.epsilon,
+        "gamma": dqn.gamma,
+        "alpha": dqn.alpha,
+        "epsilon": dqn.epsilon,
+        "epsilon_min": dqn.epsilon_min,
+        "epsilon_decay": dqn.epsilon_decay,
+        "batch_size": dqn.batch_size,
+        "C": dqn.C,
+        "Memory Size": dqn.memory_size,
+        "Rewards": running_rewards,
+        "Wall Time": start - time.time() }, ignore_index=True)
+
     env.quit()
+    df_DQN.to_csv("data/DQN_Breakout.csv")
     env.plot_rewards()
 
 if __name__ == '__main__':
