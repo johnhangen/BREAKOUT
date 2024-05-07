@@ -17,16 +17,15 @@ import pandas as pd
 import torch
 
 import time
-
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-#seeding 
+# seeding 
 np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 10
+    num_episodes = 1
     max_memory = 1000
 
     # init database
@@ -94,22 +93,23 @@ def main():
             if env.terminated or env.truncated:
                 break
 
-    df_DQN = df_DQN._append({
-        "Episode": i,
-        "Epsilon Value": dqn.epsilon,
-        "gamma": dqn.gamma,
-        "alpha": dqn.alpha,
-        "epsilon": dqn.epsilon,
-        "epsilon_min": dqn.epsilon_min,
-        "epsilon_decay": dqn.epsilon_decay,
-        "batch_size": dqn.batch_size,
-        "C": dqn.C,
-        "Memory Size": dqn.memory_size,
-        "Rewards": running_rewards,
-        "Wall Time": start - time.time() }, ignore_index=True)
+        df = df._append({
+            "Episode": i,
+            "Epsilon Value": dqn.epsilon,
+            "gamma": dqn.gamma,
+            "alpha": dqn.alpha,
+            "epsilon": dqn.epsilon,
+            "epsilon_min": dqn.epsilon_min,
+            "epsilon_decay": dqn.epsilon_decay,
+            "batch_size": dqn.batch_size,
+            "C": dqn.C,
+            "Memory Size": dqn.memory_size,
+            "Rewards": running_rewards,
+            "Wall Time": start - time.time() }, ignore_index=True)
 
+    # ending process
     env.quit()
-    df_DQN.to_csv("data/DQN_Breakout.csv")
+    df.to_csv("data/DQN_Breakout.csv")
     env.plot_rewards()
 
 if __name__ == '__main__':

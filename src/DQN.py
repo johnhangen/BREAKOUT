@@ -100,7 +100,7 @@ class DQN_Network():
         # Sample random minibatch of transitions from D
         batches = self.memory.sample(self.batch_size)
         
-        #S_prime = torch.cat(S_prime).to(self.device)
+        S_prime = torch.cat(S_prime).to(self.device)
 
         # TODO: make batch trainning work
         for _, batch in enumerate(batches):
