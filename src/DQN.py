@@ -51,8 +51,8 @@ class DQN_Network():
         self.alpha: float = 0.0001
         self.epsilon: float = 1.0
         self.epsilon_min: float = 0.1
-        self.epsilon_decay: float = 0.001
-        self.batch_size: int = 1000
+        self.epsilon_decay: float = 0.003
+        self.batch_size: int = 500
         self.memory_size: int = 10_000
         self.C:int = 500
 
@@ -100,7 +100,7 @@ class DQN_Network():
         # Sample random minibatch of transitions from D
         batches = self.memory.sample(self.batch_size)
         
-        S_prime = torch.cat(S_prime).to(self.device)
+        #S_prime = torch.cat(S_prime).to(self.device)
 
         # TODO: make batch trainning work
         for _, batch in enumerate(batches):

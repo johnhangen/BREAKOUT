@@ -35,6 +35,9 @@ class BreakoutEnvAgent():
         self._seed: int = seed
         self.render_mode: bool = render_mode
 
+        # TODO: blurr with four frames
+        self.observation_queue = [np.array([0])]
+
         # graphing vars
         self.plot_rewards_bool = plot_rewards_bool
         if plot_rewards_bool:
@@ -76,11 +79,31 @@ class BreakoutEnvAgent():
     def get_reward_range(self) -> tuple:
         return self.env.reward_range
     
+    @classmethod
+    def convert_to_grayscale(self, element) -> np.array:
+        return np.dot(element, [0.299, 0.587, 0.114])
+    
     def convert_observation(self) -> np.array:
-        return resize(np.dot(self.observation, [0.299, 0.587, 0.114]), (84, 84))
+        if len(self.observation_queue) < 4:
+            return resize(self.observation_queue[0], (84, 84))
+        else:
+            return resize(np.add(np.add(
+                self.observation_queue[0], 
+                self.observation_queue[1]), 
+                np.add(self.observation_queue[2], 
+                self.observation_queue[3]))
+                /4.0, (84, 84))
     
     def step(self, action:int) -> tuple:
         self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
+        
+        # update observation queue
+        if len(self.observation_queue) < 4:
+            self.observation_queue.append(self.convert_to_grayscale(self.observation))
+        else:
+            self.observation_queue.pop(0)
+            self.observation_queue.append(self.convert_to_grayscale(self.observation))
+
         self.reward_running += self.reward
         return self.observation, self.reward, self.terminated, self.truncated, self.info
     
