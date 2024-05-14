@@ -48,13 +48,13 @@ class DQN_Network():
 
         # hyperparameters
         self.gamma: float = 0.99
-        self.alpha: float = 0.0001
+        self.alpha: float = 0.00025
         self.epsilon: float = 1.0
         self.epsilon_min: float = 0.1
-        self.epsilon_decay: float = 0.003
+        self.epsilon_decay: float = 0.001
         self.batch_size: int = 500
-        self.memory_size: int = 10_000
-        self.C:int = 500
+        self.memory_size: int = 100_000
+        self.C:int = 1000
 
         #enviroment vars
         self.action_space: int = action_space
@@ -108,7 +108,8 @@ class DQN_Network():
 
             # compute Q(s_t, a)
             Q = self.policy_network(S)[:, A]
-            Q_prime = self.target_network(S_prime).max(1)[0].detach()
+            with torch.no_grad():
+                Q_prime = self.target_network(S_prime).max(1)[0].detach()
 
             target = R + self.gamma * Q_prime
             loss = F.smooth_l1_loss(Q, target)

@@ -25,8 +25,8 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 250
-    max_memory = 1000
+    num_episodes = 1000
+    max_memory = 10_000
 
     # init database
     df = pd.DataFrame(
@@ -90,8 +90,6 @@ def main():
 
             dqn.update_target_network()
 
-            env.screenshot_of_convert()
-
             if env.terminated or env.truncated:
                 break
 
@@ -108,12 +106,13 @@ def main():
             "Memory Size": dqn.memory_size,
             "Rewards": running_rewards,
             "Wall Time": start - time.time() }, ignore_index=True)
+        
+        dqn.save_policy_network('model/DQN_policy.pt')
+        dqn.save_target_network('model/DQN_target.pt')
+        df.to_csv("data/DQN_Breakout.csv")
 
     # ending process
-    dqn.save_policy_network('model/DQN_policy.pt')
-    dqn.save_target_network('model/DQN_target.pt')
     env.quit()
-    df.to_csv("data/DQN_Breakout.csv")
     env.plot_rewards()
 
 if __name__ == '__main__':
