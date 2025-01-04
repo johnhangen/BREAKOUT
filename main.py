@@ -10,6 +10,8 @@ from src.DQN import DQN_Network
 from src.breakout_env import BreakoutEnvAgent
 from src.memory_replay import MemoryReplay
 
+from configs.config import Config
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -28,22 +30,7 @@ def main():
     num_episodes = 1000
     max_memory = 10_000
 
-    # init database
-    df = pd.DataFrame(
-        columns=[
-        "Episode",
-        "Epsilon Value",
-        "gamma",
-        "alpha",
-        "epsilon",
-        "epsilon_min",
-        "epsilon_decay",
-        "batch_size",
-        "C",
-        "Memory Size",
-        "Rewards",
-        "Wall Time"
-    ])
+    config = Config.load_config("configs\starting_params.yaml")
 
     # init environment
     env = BreakoutEnvAgent()
@@ -58,8 +45,6 @@ def main():
     # init replay memory
     memory = MemoryReplay(max_memory=max_memory)
     dqn.init_memory_replay(memory)
-
-    start = time.time()
 
     for i in range(num_episodes):
         if i % 10 == 0 and i != 0:
@@ -92,24 +77,6 @@ def main():
 
             if env.terminated or env.truncated:
                 break
-
-        df = df._append({
-            "Episode": i,
-            "Epsilon Value": dqn.epsilon,
-            "gamma": dqn.gamma,
-            "alpha": dqn.alpha,
-            "epsilon": dqn.epsilon,
-            "epsilon_min": dqn.epsilon_min,
-            "epsilon_decay": dqn.epsilon_decay,
-            "batch_size": dqn.batch_size,
-            "C": dqn.C,
-            "Memory Size": dqn.memory_size,
-            "Rewards": running_rewards,
-            "Wall Time": start - time.time() }, ignore_index=True)
-        
-        dqn.save_policy_network('model/DQN_policy.pt')
-        dqn.save_target_network('model/DQN_target.pt')
-        df.to_csv("data/DQN_Breakout.csv")
 
     # ending process
     env.quit()

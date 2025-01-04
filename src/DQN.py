@@ -19,6 +19,7 @@ import numpy as np
 import torch.utils
 
 from src.memory_replay import MemoryReplay
+from configs.config import Config
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -89,18 +90,19 @@ class DQN(nn.Module):
 
 class DQN_Network():
 
-    def __init__(self, action_space:int, observation_space:int) -> None:
+    def __init__(self, action_space:int, observation_space:int, config:Config) -> None:
+        self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # hyperparameters
-        self.gamma: float = 0.99
-        self.alpha: float = 0.0001
-        self.epsilon: float = 1.0
-        self.epsilon_min: float = 0.1
-        self.epsilon_decay: float = 0.001
-        self.batch_size: int = 500
-        self.memory_size: int = 100_000
-        self.C:int = 1000
+        self.gamma: float = self.config.DQN.gamma
+        self.alpha: float = self.config.DQN.alpha
+        self.epsilon: float = self.config.DQN.epsilon
+        self.epsilon_min: float = self.config.DQN.epsilon_min
+        self.epsilon_decay: float = self.config.DQN.epsilon_decay
+        self.batch_size: int = self.config.DQN.batch_size
+        self.memory_size: int = self.config.DQN.memory_size
+        self.C:int = self.config.DQN.C
 
         #enviroment vars
         self.action_space: int = action_space
