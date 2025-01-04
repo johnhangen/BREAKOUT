@@ -9,7 +9,11 @@
 #############################################
 
 # Required Libraries
+from collections import namedtuple
 import numpy as np
+
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
 
 class MemoryReplay():
 
@@ -19,7 +23,12 @@ class MemoryReplay():
         self.index = 0
 
     def add(self, transition:tuple) -> None:
-        self.memory[self.index % self.max_memory] = transition
+        self.memory[self.index % self.max_memory] = Transition(
+            transition[0],
+            transition[1],
+            transition[3],
+            transition[2]
+        )
         self.index += 1
     
     def sample(self, n:int=1) -> list:

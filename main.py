@@ -66,7 +66,7 @@ def main():
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
 
         _ = env.reset()
-        S = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
+        S = env.convert_observation()
 
         dqn.update_epsilon()
 
@@ -76,11 +76,11 @@ def main():
             A = dqn.get_action(S)
 
             S_prime, R, _, _, _ = env.step(A)
-            S_prime = torch.tensor(env.convert_observation(), dtype=torch.float32, device=dqn.device).unsqueeze(0)
+            S_prime = env.convert_observation()
 
             running_rewards += R
 
-            R = torch.tensor(R, dtype=torch.float32, device=dqn.device)
+            R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
             assert A <= n_actions
             memory.add((S, A, R, S_prime))
 

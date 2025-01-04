@@ -15,6 +15,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Union
 from skimage.transform import resize
+import torchvision.transforms as T
+import torch
 
 # housekeeping
 import os
@@ -36,7 +38,13 @@ class BreakoutEnvAgent():
         self.render_mode: bool = render_mode
 
         # TODO: blurr with four frames
-        self.observation_queue = [np.array([0])]
+        self.observation_queue = [torch.zeros(3, 84, 84)]
+        self.transform = T.Compose([
+            T.ToPILImage(),
+            T.Resize((84, 84)),
+            T.ToTensor(),
+            T.Normalize(mean=[0.5], std=[0.5])
+        ])
 
         # graphing vars
         self.plot_rewards_bool = plot_rewards_bool
@@ -85,24 +93,23 @@ class BreakoutEnvAgent():
     
     def convert_observation(self) -> np.array:
         if len(self.observation_queue) < 4:
-            return resize(self.observation_queue[0], (84, 84))
+            return self.observation_queue[0]
         else:
-            return resize(np.add(np.add(
-                self.observation_queue[0], 
-                self.observation_queue[1]), 
-                np.add(self.observation_queue[2], 
-                self.observation_queue[3]))
-                /4.0, (84, 84))
+            return (self.observation_queue[0] +
+                    self.observation_queue[1] +
+                    self.observation_queue[2] +
+                    self.observation_queue[3]
+                )/4.0
     
     def step(self, action:int) -> tuple:
         self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
         
         # update observation queue
         if len(self.observation_queue) < 4:
-            self.observation_queue.append(self.convert_to_grayscale(self.observation))
+            self.observation_queue.append(self.transform(self.observation))
         else:
             self.observation_queue.pop(0)
-            self.observation_queue.append(self.convert_to_grayscale(self.observation))
+            self.observation_queue.append(self.transform(self.observation))
 
         self.reward_running += self.reward
         return self.observation, self.reward, self.terminated, self.truncated, self.info

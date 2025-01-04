@@ -9,6 +9,7 @@
 #############################################
 
 # Required Libraries
+from collections import namedtuple
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,24 +23,69 @@ from src.memory_replay import MemoryReplay
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
+
 class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
-        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(49, 49)  
-        self.fc2 = nn.Linear(49, 4)
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+
+        dummy_input = torch.zeros(1, 3, 84, 84)
+        conv_output_size = self.features(dummy_input).view(1, -1).size(1)
+
+        self.classifier = nn.Sequential(
+            nn.Linear(conv_output_size, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4)
+        )
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = x.view(x.size(0), -1) 
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
         return x
-
+    
 
 class DQN_Network():
 
@@ -48,7 +94,7 @@ class DQN_Network():
 
         # hyperparameters
         self.gamma: float = 0.99
-        self.alpha: float = 0.00025
+        self.alpha: float = 0.0001
         self.epsilon: float = 1.0
         self.epsilon_min: float = 0.1
         self.epsilon_decay: float = 0.001
@@ -86,39 +132,43 @@ class DQN_Network():
     def update_epsilon(self) -> None:
         self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
-    def get_action(self, state:torch.Tensor) -> int:
+    def get_action(self, state:torch.Tensor) -> torch.Tensor:
         if np.random.rand() < self.epsilon:
-            return np.random.randint(0, self.action_space)
+            return torch.tensor([[np.random.randint(0, self.action_space)]], device=self.device, dtype=torch.long)
         else:
             with torch.no_grad():
-                return torch.mode(self.policy_network(state).max(1).indices).values.item()
+                return self.policy_network(state).max(1).view(1, 1)
             
     def minibatch_update(self) -> None:
         if len(self.memory) < self.batch_size:
             return
 
-        # Sample random minibatch of transitions from D
-        batches = self.memory.sample(self.batch_size)
+        transitions = self.memory.sample(self.batch_size)
+        batch = Transition(*zip(*transitions))
+
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=self.device, dtype=torch.bool)
+        non_final_next_states = torch.stack([s for s in batch.next_state
+                                                    if s is not None]).to(self.device)
+
+        state_batch = torch.stack(batch.state).to(self.device)
+        action_batch = torch.cat(batch.action).to(self.device)
+        reward_batch = torch.tensor(batch.reward, device=self.device).float()
         
-        #S_prime = torch.cat(S_prime).to(self.device)
+        state_action_values = self.policy_network(state_batch).gather(1, action_batch)
+        
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
+        with torch.no_grad():
+            next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
+        expected_state_action_values = (next_state_values * self.gamma) + reward_batch        
 
-        # TODO: make batch trainning work
-        for _, batch in enumerate(batches):
-            S, A, R, S_prime = batch
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
-            # compute Q(s_t, a)
-            Q = self.policy_network(S)[:, A]
-            with torch.no_grad():
-                Q_prime = self.target_network(S_prime).max(1)[0].detach()
-
-            target = R + self.gamma * Q_prime
-            loss = F.smooth_l1_loss(Q, target)
-
-            self.optimizer.zero_grad()
-            loss.backward()
-
-            torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
-            self.optimizer.step()
+        self.optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
+        self.optimizer.step()      
 
     def update_target_network(self, t: int = 0) -> None:
         if t % self.C == 0:
