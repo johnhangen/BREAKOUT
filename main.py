@@ -11,6 +11,7 @@ from src.breakout_env import BreakoutEnvAgent
 from src.memory_replay import MemoryReplay
 
 from configs.config import Config
+import wandb
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,7 +40,26 @@ def main():
     # init DQN
     input_shape = env.convert_observation().shape[0]
     n_actions = env.get_action_space().n
-    dqn = DQN_Network(n_actions, input_shape)
+
+    wandb.init(
+        config={
+            "gamma": config.DQN.gamma,
+            "alpha": config.DQN.alpha,
+            "epsilon": config.DQN.epsilon,
+            "epsilon_min": config.DQN.epsilon_min,
+            "epsilon_decay": config.DQN.epsilon_decay,
+            "batch_size": config.DQN.batch_size,
+            "memory_size": config.DQN.memory_size,
+            "C": config.DQN.C,
+            "num_episodes": num_episodes,
+            "max_memory": max_memory,
+            "n_actions": n_actions,
+            "input_shape": input_shape,
+        },
+        #mode="disabled",
+    )
+    
+    dqn = DQN_Network(n_actions, input_shape, config)
     dqn.init_networks()
 
     # init replay memory
@@ -74,6 +94,7 @@ def main():
             S = S_prime
 
             dqn.update_target_network()
+            dqn.update_epsilon()
 
             if env.terminated or env.truncated:
                 break

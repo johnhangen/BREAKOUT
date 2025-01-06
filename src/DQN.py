@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import wandb
 
 import numpy as np
 import torch.utils
@@ -128,6 +129,7 @@ class DQN_Network():
         self.policy_network = DQN().to(self.device)
         self.target_network = DQN().to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
+        wandb.watch(self.policy_network, log_freq=100)
 
         self.init_optimizer()
 
@@ -139,7 +141,8 @@ class DQN_Network():
             return torch.tensor([[np.random.randint(0, self.action_space)]], device=self.device, dtype=torch.long)
         else:
             with torch.no_grad():
-                return self.policy_network(state).max(1).view(1, 1)
+                #wandb.log({"Examples": wandb.Image(state)})
+                return self.policy_network(state.unsqueeze(0)).max(1).indices.view(1, 1)
             
     def minibatch_update(self) -> None:
         if len(self.memory) < self.batch_size:
@@ -170,7 +173,11 @@ class DQN_Network():
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
-        self.optimizer.step()      
+        self.optimizer.step()    
+
+        print(f"Loss: {loss.item()}, Epsilon: {self.epsilon}")
+        wandb.log({"loss": loss,
+                   "Epsilon":self.epsilon})
 
     def update_target_network(self, t: int = 0) -> None:
         if t % self.C == 0:
@@ -187,8 +194,3 @@ class DQN_Network():
     
     def load_target_network(self, path:str) -> None:
         self.target_network.load_state_dict(torch.load(path))
-            
-    
-
-    
-
