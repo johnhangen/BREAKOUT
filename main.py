@@ -28,13 +28,15 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
-    num_episodes = 1000
+    num_episodes = 1_00
     max_memory = 10_000
 
-    config = Config.load_config("configs\starting_params.yaml")
+    config = Config.load_config("/content/BREAKOUT/configs/starting_params.yaml")
 
     # init environment
-    env = BreakoutEnvAgent()
+    env = BreakoutEnvAgent(
+        #render_mode="human"
+    )
     env.init_environment()
 
     # init DQN
@@ -58,7 +60,7 @@ def main():
         },
         #mode="disabled",
     )
-    
+
     dqn = DQN_Network(n_actions, input_shape, config)
     dqn.init_networks()
 
@@ -82,6 +84,9 @@ def main():
 
             S_prime, R, _, _, _ = env.step(A)
             S_prime = env.convert_observation()
+            wandb.log(
+                {"reward": R}
+            )
 
             running_rewards += R
 
@@ -102,6 +107,8 @@ def main():
     # ending process
     env.quit()
     env.plot_rewards()
+    dqn.save_policy_network("model\DQN_policy.pt")
+    dqn.save_target_network("model\DQN_target.pt")
 
 if __name__ == '__main__':
     main()

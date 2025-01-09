@@ -141,8 +141,10 @@ class DQN_Network():
             return torch.tensor([[np.random.randint(0, self.action_space)]], device=self.device, dtype=torch.long)
         else:
             with torch.no_grad():
+                action = self.policy_network(state.to(self.device).unsqueeze(0)).max(1).indices.view(1, 1)
                 #wandb.log({"Examples": wandb.Image(state)})
-                return self.policy_network(state.unsqueeze(0)).max(1).indices.view(1, 1)
+                wandb.log({"Action": action})
+                return action
             
     def minibatch_update(self) -> None:
         if len(self.memory) < self.batch_size:
@@ -161,27 +163,41 @@ class DQN_Network():
         reward_batch = torch.tensor(batch.reward, device=self.device).float()
         
         state_action_values = self.policy_network(state_batch).gather(1, action_batch)
+
+        wandb.log({
+            "q_value_mean": state_action_values.mean().item(),
+            "q_value_max": state_action_values.max().item(),
+            "q_value_min": state_action_values.min().item(),
+        })
         
         next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
-        expected_state_action_values = (next_state_values * self.gamma) + reward_batch        
+        expected_state_action_values = next_state_values * self.gamma + reward_batch    
+
+        td_error = (expected_state_action_values - state_action_values).detach()
+        wandb.log({
+            "td_error_mean": td_error.mean().item(),
+            "td_error_max": td_error.max().item(),
+            "td_error_min": td_error.min().item(),
+        })    
 
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 100)
+        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 1)
         self.optimizer.step()    
 
-        print(f"Loss: {loss.item()}, Epsilon: {self.epsilon}")
+        #print(f"Loss: {loss.item()}, Epsilon: {self.epsilon}")
         wandb.log({"loss": loss,
                    "Epsilon":self.epsilon})
 
     def update_target_network(self, t: int = 0) -> None:
-        if t % self.C == 0:
-            self.target_network.load_state_dict(self.policy_network.state_dict())
+        tau = 0.005
+        for target_param, param in zip(self.target_network.parameters(), self.policy_network.parameters()):
+            target_param.data.copy_(tau * param.data + (1.0 - tau) * target_param.data)
 
     def save_policy_network(self, path:str) -> None:
         torch.save(self.policy_network.state_dict(), path)
