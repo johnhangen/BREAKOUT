@@ -38,7 +38,7 @@ class BreakoutEnvAgent():
         self.render_mode: bool = render_mode
 
         # TODO: blurr with four frames
-        self.observation_queue = [torch.zeros(3, 84, 84)]
+        self.observation_queue = [torch.zeros(1, 84, 84)]
         self.transform = T.Compose([
             T.ToPILImage(),
             T.Resize((84, 84)),

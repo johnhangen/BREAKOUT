@@ -29,7 +29,7 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class DQN(nn.Module):
-    def __init__(self, input_channels=4, num_actions=18):
+    def __init__(self, input_channels=1, num_actions=4):
         super(DQN, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=16, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
@@ -43,8 +43,6 @@ class DQN(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-
-    
 
 class DQN_Network():
 
