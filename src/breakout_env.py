@@ -42,6 +42,7 @@ class BreakoutEnvAgent():
         self.transform = T.Compose([
             T.ToPILImage(),
             T.Resize((84, 84)),
+            T.Grayscale(num_output_channels=1),
             T.ToTensor(),
             T.Normalize(mean=[0.5], std=[0.5])
         ])

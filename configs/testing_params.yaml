@@ -1,0 +1,9 @@
+DQN:
+  gamma: 0.99
+  alpha: 0.00001
+  epsilon: 0.0
+  epsilon_min: 0.0
+  epsilon_decay: 0.0
+  batch_size: 256
+  memory_size: 100_000
+  C: 1000

@@ -29,64 +29,21 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class DQN(nn.Module):
-    def __init__(self):
+    def __init__(self, input_channels=4, num_actions=18):
         super(DQN, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-
-        dummy_input = torch.zeros(1, 3, 84, 84)
-        conv_output_size = self.features(dummy_input).view(1, -1).size(1)
-
-        self.classifier = nn.Sequential(
-            nn.Linear(conv_output_size, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, 4)
-        )
+        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=16, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
+        self.fc1 = nn.Linear(in_features=32 * 9 * 9, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=num_actions)
 
     def forward(self, x):
-        x = self.features(x)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
         x = x.view(x.size(0), -1)
-        x = self.classifier(x)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return x
+
     
 
 class DQN_Network():
@@ -203,10 +160,10 @@ class DQN_Network():
         torch.save(self.policy_network.state_dict(), path)
 
     def load_policy_network(self, path:str) -> None:
-        self.policy_network.load_state_dict(torch.load(path))
+        self.policy_network.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     
     def save_target_network(self, path:str) -> None:
         torch.save(self.target_network.state_dict(), path)
     
     def load_target_network(self, path:str) -> None:
-        self.target_network.load_state_dict(torch.load(path))
+        self.target_network.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
