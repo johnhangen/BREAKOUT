@@ -97,6 +97,7 @@ class DQN_Network():
         else:
             with torch.no_grad():
                 action = self.policy_network(state.to(self.device).unsqueeze(0)).max(1).indices.view(1, 1)
+                #print(action)
                 #wandb.log({"Examples": wandb.Image(state)})
                 wandb.log({"Action": action})
                 return action
@@ -142,7 +143,7 @@ class DQN_Network():
 
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 1)
+        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 10)
         self.optimizer.step()    
 
         #print(f"Loss: {loss.item()}, Epsilon: {self.epsilon}")

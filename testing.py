@@ -57,12 +57,12 @@ def main():
     dqn.load_policy_network("model\DQN_policy.pt")
     dqn.load_target_network("model\DQN_target.pt")
 
+    _ = env.reset()
+    S = env.convert_observation()
+
     for i in range(num_episodes):
         if i % 10 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
-
-        _ = env.reset()
-        S = env.convert_observation()
         
         while True:
             A = dqn.get_action(S)
@@ -73,7 +73,8 @@ def main():
             S = S_prime
 
             if env.terminated or env.truncated:
-                break
+                _ = env.reset()
+                S = env.convert_observation()
 
     # ending process
     env.quit()

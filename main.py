@@ -27,8 +27,10 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 np.random.seed(0)
 torch.manual_seed(0)
 
+print(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+
 def main():
-    num_episodes = 1_00
+    num_episodes = 10_000
     max_memory = 10_000
 
     config = Config.load_config("/content/BREAKOUT/configs/starting_params.yaml")
@@ -42,6 +44,8 @@ def main():
     # init DQN
     input_shape = env.convert_observation().shape[0]
     n_actions = env.get_action_space().n
+
+    print(n_actions)
 
     wandb.init(
         config={
@@ -57,6 +61,7 @@ def main():
             "max_memory": max_memory,
             "n_actions": n_actions,
             "input_shape": input_shape,
+            "Device": torch.device("cuda" if torch.cuda.is_available() else "cpu")
         },
         #mode="disabled",
     )
@@ -106,7 +111,7 @@ def main():
 
     # ending process
     env.quit()
-    env.plot_rewards()
+    #env.plot_rewards()
     dqn.save_policy_network("/content/BREAKOUT/model/DQN_policy.pt")
     dqn.save_target_network("/content/BREAKOUT/model/DQN_target.pt")
 
