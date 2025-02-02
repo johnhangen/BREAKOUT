@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import torch
+import torch 
 
 import time
 import os
@@ -69,7 +69,6 @@ def main():
     dqn = DQN_Network(n_actions, input_shape, config)
     dqn.init_networks()
 
-    # init replay memory
     memory = MemoryReplay(max_memory=max_memory)
     dqn.init_memory_replay(memory)
 
@@ -87,27 +86,29 @@ def main():
         while True:
             A = dqn.get_action(S)
 
-            S_prime, R, _, _, _ = env.step(A)
+            S_prime, R, terminated, truncated, _ = env.step(A)
             S_prime = env.convert_observation()
-            wandb.log(
-                {"reward": R}
-            )
 
-            running_rewards += R
+            wandb.log({"reward": R.item()})
+            running_rewards += R.item()
 
             R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
-            assert A <= n_actions
+            A = torch.tensor([[A]], dtype=torch.int64, device=dqn.device)
             memory.add((S, A, R, S_prime))
 
             dqn.minibatch_update()
 
-            S = S_prime
+            if i % config.DQN.C == 0:
+                dqn.update_target_network()
 
-            dqn.update_target_network()
             dqn.update_epsilon()
 
-            if env.terminated or env.truncated:
+            S = S_prime
+
+            if terminated or truncated:
                 break
+
+        wandb.log({"episode_reward": running_rewards, "episode": i})
 
     # ending process
     env.quit()
