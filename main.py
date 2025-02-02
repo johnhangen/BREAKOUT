@@ -91,7 +91,8 @@ def main():
 
             wandb.log({"reward": R})
             running_rewards += R
-
+            R = max(-1, min(1, R)) 
+            
             R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
             memory.add((S, A, R, S_prime))
 

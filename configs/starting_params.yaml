@@ -1,9 +1,9 @@
 DQN:
   gamma: 0.99
-  alpha: 0.0001
+  alpha: 0.00005
   epsilon: 1.0
   epsilon_min: 0.1
   epsilon_decay: 0.00001
-  batch_size: 256
+  batch_size: 64
   memory_size: 100_000
-  C: 250
+  tau : 0.001
