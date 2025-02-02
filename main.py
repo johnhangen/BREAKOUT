@@ -33,7 +33,7 @@ def main():
     num_episodes = 10_000
     max_memory = 10_000
 
-    config = Config.load_config("/content/BREAKOUT/configs/starting_params.yaml")
+    config = Config.load_config("configs/starting_params.yaml")
 
     # init environment
     env = BreakoutEnvAgent(
@@ -75,8 +75,8 @@ def main():
     for i in range(num_episodes):
         if i % 10 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
-            dqn.save_policy_network("/content/BREAKOUT/model/DQN_policy.pt")
-            dqn.save_target_network("/content/BREAKOUT/model/DQN_target.pt")
+            dqn.save_policy_network("model/DQN_policy.pt")
+            dqn.save_target_network("model/DQN_target.pt")
 
         _ = env.reset()
         S = env.convert_observation()
@@ -111,8 +111,8 @@ def main():
     # ending process
     env.quit()
     #env.plot_rewards()
-    dqn.save_policy_network("/content/BREAKOUT/model/DQN_policy.pt")
-    dqn.save_target_network("/content/BREAKOUT/model/DQN_target.pt")
+    dqn.save_policy_network("model/DQN_policy.pt")
+    dqn.save_target_network("model/DQN_target.pt")
 
 if __name__ == '__main__':
     main()
