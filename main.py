@@ -89,8 +89,8 @@ def main():
             S_prime, R, _, _, _ = env.step(A)
             S_prime = env.convert_observation()
 
-            wandb.log({"reward": R.item()})
-            running_rewards += R.item()
+            wandb.log({"reward": R})
+            running_rewards += R
 
             R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
             memory.add((S, A, R, S_prime))
