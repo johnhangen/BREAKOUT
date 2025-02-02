@@ -6,4 +6,4 @@ DQN:
   epsilon_decay: 0.00001
   batch_size: 64
   memory_size: 100_000
-  tau : 0.001
+  C: 0.001
