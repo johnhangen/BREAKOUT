@@ -63,6 +63,8 @@ def main():
     for i in range(num_episodes):
         if i % 10 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
+
+        running_rewards = 0
         
         while True:
             A = dqn.get_action(S)
@@ -72,7 +74,11 @@ def main():
 
             S = S_prime
 
+            running_rewards += R
+
             if env.terminated or env.truncated:
+                print(running_rewards)
+                running_rewards = 0
                 _ = env.reset()
                 S = env.convert_observation()
 
