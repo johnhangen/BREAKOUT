@@ -81,31 +81,29 @@ def main():
         _ = env.reset()
         S = env.convert_observation()
 
-        running_rewards = 0
+        running_rewards = 0 
         
         while True:
             A = dqn.get_action(S)
 
-            S_prime, R, terminated, truncated, _ = env.step(A)
+            S_prime, R, _, _, _ = env.step(A)
             S_prime = env.convert_observation()
 
             wandb.log({"reward": R.item()})
             running_rewards += R.item()
 
             R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
-            A = torch.tensor([[A]], dtype=torch.int64, device=dqn.device)
             memory.add((S, A, R, S_prime))
 
             dqn.minibatch_update()
 
-            if i % config.DQN.C == 0:
-                dqn.update_target_network()
+            dqn.update_target_network()
 
             dqn.update_epsilon()
 
             S = S_prime
 
-            if terminated or truncated:
+            if env.terminated or env.truncated:
                 break
 
         wandb.log({"episode_reward": running_rewards, "episode": i})
