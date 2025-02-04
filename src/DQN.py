@@ -18,8 +18,10 @@ import wandb
 
 import numpy as np
 import torch.utils
+from typing import Union
 
-from src.memory_replay import MemoryReplay
+from .UniformExperienceReplay import UniformExperienceReplay
+from .PriorityExperienceReplay import PriorityExperienceReplay
 from configs.config import Config
 
 import os
@@ -29,16 +31,19 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
 class DQN(nn.Module):
-    def __init__(self, input_channels=1, num_actions=4):
+    def __init__(self, input_channels=4, num_actions=4):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=16, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
-        self.fc1 = nn.Linear(in_features=32 * 9 * 9, out_features=256)
-        self.fc2 = nn.Linear(in_features=256, out_features=num_actions)
+        self.conv1 = nn.Conv2d(in_channels=input_channels, out_channels=32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
+        self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
+        self.fc2 = nn.Linear(in_features=512, out_features=num_actions)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        #print(f"Shape before flattening: {x.shape}")
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
@@ -52,12 +57,10 @@ class DQN_Network():
 
         # hyperparameters
         self.gamma: float = self.config.DQN.gamma
-        self.alpha: float = self.config.DQN.alpha
         self.epsilon: float = self.config.DQN.epsilon
         self.epsilon_min: float = self.config.DQN.epsilon_min
         self.epsilon_decay: float = self.config.DQN.epsilon_decay
         self.batch_size: int = self.config.DQN.batch_size
-        self.memory_size: int = self.config.DQN.memory_size
         self.C:int = self.config.DQN.C
 
         #enviroment vars
@@ -74,16 +77,24 @@ class DQN_Network():
         # optimizer
         self.optimizer = None
 
-    def init_memory_replay(self, memory) -> None:
+    def init_memory_replay(self, memory: Union[UniformExperienceReplay, PriorityExperienceReplay]) -> None:
         self.memory = memory
 
     def init_optimizer(self) -> None:
-        self.optimizer = optim.Adam(self.policy_network.parameters(), lr=self.alpha)
-
+        self.optimizer = torch.optim.RMSprop(
+            self.policy_network.parameters(),
+            lr=self.config.Optimizer.alpha, 
+            alpha=self.config.Optimizer.squared_gradient_momentum,
+            eps=self.config.Optimizer.min_squared_gradient,
+            momentum=self.config.Optimizer.gradient_momentum,
+            centered=False
+        )
     def init_networks(self) -> None:
         self.policy_network = DQN().to(self.device)
         self.target_network = DQN().to(self.device)
         self.target_network.load_state_dict(self.policy_network.state_dict())
+        self.policy_network.train()
+        self.target_network.train()
         wandb.watch(self.policy_network, log_freq=100)
 
         self.init_optimizer()
@@ -97,15 +108,13 @@ class DQN_Network():
         else:
             with torch.no_grad():
                 action = self.policy_network(state.to(self.device).unsqueeze(0)).max(1).indices.view(1, 1)
-                #print(action)
-                #wandb.log({"Examples": wandb.Image(state)})
                 wandb.log({"Action": action})
                 return action
             
     def minibatch_update(self) -> None:
         if len(self.memory) < self.batch_size:
             return
-
+        
         transitions = self.memory.sample(self.batch_size)
         batch = Transition(*zip(*transitions))
 
@@ -143,17 +152,14 @@ class DQN_Network():
 
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), 10)
+        torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), self.config.DQN.grad_clip_val)
         self.optimizer.step()    
 
-        #print(f"Loss: {loss.item()}, Epsilon: {self.epsilon}")
         wandb.log({"loss": loss,
                    "Epsilon":self.epsilon})
 
-    def update_target_network(self, t: int = 0) -> None:
-        tau = 0.005
-        for target_param, param in zip(self.target_network.parameters(), self.policy_network.parameters()):
-            target_param.data.copy_(tau * param.data + (1.0 - tau) * target_param.data)
+    def update_target_network(self) -> None:
+        self.target_network.load_state_dict(self.policy_network.state_dict())
 
     def save_policy_network(self, path:str) -> None:
         torch.save(self.policy_network.state_dict(), path)

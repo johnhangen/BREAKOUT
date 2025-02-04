@@ -8,7 +8,7 @@
 
 from src.DQN import DQN_Network
 from src.breakout_env import BreakoutEnvAgent
-from src.memory_replay import MemoryReplay
+from src.ExperienceReplay import MemoryReplay
 
 from configs.config import Config
 import wandb

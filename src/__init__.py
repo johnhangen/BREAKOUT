@@ -1,11 +1,12 @@
-from .breakout_env import BreakoutEnvAgent, BreakoutEnvPlayer
+from .breakout_env import BreakoutEnvAgent
 from .DQN import DQN_Network, DQN
-from .memory_replay import MemoryReplay
+from .UniformExperienceReplay import UniformExperienceReplay
+from .PriorityExperienceReplay import PriorityExperienceReplay
 
 __all__ = [
             "BreakoutEnvAgent", 
-           "BreakoutEnvPlayer",
            "DQN_Network",
            "DQN",
-           "MemoryReplay"
+           "UniformExperienceReplay",
+           "UniformExperienceReplay"
            ]

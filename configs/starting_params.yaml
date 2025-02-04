@@ -1,9 +1,31 @@
 DQN:
   gamma: 0.99
-  alpha: 0.00005
   epsilon: 1.0
   epsilon_min: 0.1
-  epsilon_decay: 0.00001
-  batch_size: 64
-  memory_size: 100_000
-  C: 0.001
+  epsilon_decay: 0.000001
+  batch_size: 32
+  C: 1000
+  num_episodes: 10_000
+  grad_clip_val: 1
+
+Optimizer:
+    alpha: 0.00025
+    squared_gradient_momentum: 0.95
+    min_squared_gradient: 0.01
+    gradient_momentum: 0.95
+
+ENV:
+  seed: 42
+  plot_rewards_bool: False
+  reward_clip: True
+  repeat: 4
+
+MemoryReplay:
+  max_memory: 10_000
+  seed: 0
+  priority_replay: False
+  variant: 'rank'
+  alpha: 0.5
+  alpha_decay: 0.0
+  beta: 0.0
+  beta_decay: 0.0

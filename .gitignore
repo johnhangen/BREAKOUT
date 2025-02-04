@@ -1,2 +1,3 @@
 src/__pycache__
 wandb/
+configs/__pycache__
