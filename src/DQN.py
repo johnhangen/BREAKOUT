@@ -81,13 +81,13 @@ class DQN_Network():
         self.memory = memory
 
     def init_optimizer(self) -> None:
-        self.optimizer = torch.optim.RMSprop(
+        self.optimizer = torch.optim.AdamW(
             self.policy_network.parameters(),
             lr=self.config.Optimizer.alpha, 
-            alpha=self.config.Optimizer.squared_gradient_momentum,
-            eps=self.config.Optimizer.min_squared_gradient,
-            momentum=self.config.Optimizer.gradient_momentum,
-            centered=False
+            #alpha=self.config.Optimizer.squared_gradient_momentum,
+            #eps=self.config.Optimizer.min_squared_gradient,
+            #momentum=self.config.Optimizer.gradient_momentum,
+            #centered=False
         )
     def init_networks(self) -> None:
         self.policy_network = DQN().to(self.device)
@@ -138,7 +138,7 @@ class DQN_Network():
         next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
-        expected_state_action_values = next_state_values * self.gamma + reward_batch    
+        expected_state_action_values = (next_state_values * self.gamma) + reward_batch    
 
         td_error = (expected_state_action_values - state_action_values).detach()
         wandb.log({

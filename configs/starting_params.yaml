@@ -2,14 +2,14 @@ DQN:
   gamma: 0.99
   epsilon: 1.0
   epsilon_min: 0.1
-  epsilon_decay: 0.000001
-  batch_size: 32
-  C: 1000
+  epsilon_decay: 0.00001
+  batch_size: 128
+  C: 10_000
   num_episodes: 10_000
-  grad_clip_val: 1
+  grad_clip_val: 10
 
 Optimizer:
-    alpha: 0.00025
+    alpha: 0.0001
     squared_gradient_momentum: 0.95
     min_squared_gradient: 0.01
     gradient_momentum: 0.95
@@ -21,7 +21,7 @@ ENV:
   repeat: 4
 
 MemoryReplay:
-  max_memory: 10_000
+  max_memory: 1_000_000
   seed: 0
   priority_replay: False
   variant: 'rank'

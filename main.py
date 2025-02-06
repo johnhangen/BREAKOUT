@@ -88,16 +88,14 @@ def main():
             S_prime = env.convert_observation()
 
             running_rewards += R
-            R = max(-1, min(1, R)) 
 
-            R = torch.tensor([[R]], dtype=torch.float32, device=dqn.device)
-            memory.add(S, A, S_prime, R)
+            memory.add(S, A, S_prime, torch.tensor([[R]], dtype=torch.float32, device=dqn.device))
 
             dqn.minibatch_update()
             dqn.update_epsilon()
             S = S_prime
 
-            if c % config.DQN.C:
+            if c % config.DQN.C == 0:
                 dqn.update_target_network()
 
             if env.terminated or env.truncated:

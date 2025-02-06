@@ -45,9 +45,10 @@ class BreakoutEnvAgent():
 
         # image inits
         self.observation_queue = torch.zeros(4, 84, 84)
+        self.previous_frame = torch.zeros(1, 84, 84)
         self.transform = T.Compose([
             T.Grayscale(num_output_channels=1),
-            T.Resize((84, 84), interpolation=T.InterpolationMode.BILINEAR),
+            T.Resize((84, 84)),
             T.Normalize(0.5, 0.5),
             T.ConvertImageDtype(torch.float32),
         ])
@@ -102,17 +103,18 @@ class BreakoutEnvAgent():
     def step(self, action: int) -> tuple:
         total_reward = 0
 
-        for _ in range(self.config.ENV.repeat):
-            self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
-            total_reward += self.reward
-            if self.terminated or self.truncated:
-                break
+        self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
+        total_reward += self.reward
 
         obs_tensor = torch.tensor(self.observation, dtype=torch.float32).permute(2, 0, 1)
         obs_transformed = self.transform(obs_tensor)
-        obs_max = torch.maximum(self.observation_queue[-1], obs_transformed)
-        
+        obs_max = torch.maximum(self.previous_frame, obs_transformed)
+        self.previous_frame = obs_transformed
+        #wandb.log({"Examples": wandb.Image(obs_max.cpu().numpy())})
         self.observation_queue = torch.cat([self.observation_queue[1:], obs_max], dim=0)
+
+        if self.config.ENV.reward_clip:
+            self.reward =  max(-1, min(1, self.reward))
 
         return self.observation_queue, self.reward, self.terminated, self.truncated, self.info
 
