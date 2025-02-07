@@ -29,6 +29,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 def main():
+    print("cuda" if torch.cuda.is_available() else "cpu")
     config = Config.load_config("configs/starting_params.yaml")
 
     # init environment
@@ -107,6 +108,11 @@ def main():
             })
 
         if i % 100 == 0 and i != 0:
+            if torch.cuda.is_available():
+                gpu_name = torch.cuda.get_device_name(0) # Index 0 refers to the primary GPU
+                print(f"GPU Name: {gpu_name}")
+            else:
+                print("No GPU available.")
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
             if running_rewards > highest_reward:
                 highest_reward = running_rewards

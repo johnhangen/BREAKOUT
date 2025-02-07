@@ -107,9 +107,9 @@ class BreakoutEnvAgent():
     def step(self, action: int) -> tuple:
         total_reward = 0
 
-        for _ in range(self.config.ENV.repeat):
-            self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
-            total_reward += self.reward
+        #for _ in range(self.config.ENV.repeat):
+        self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
+        total_reward += self.reward
 
         obs_tensor = torch.tensor(self.observation, dtype=torch.float32).permute(2, 0, 1)
         obs_transformed = self.transform(obs_tensor)
