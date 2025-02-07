@@ -62,6 +62,7 @@ class DQN_Network():
         self.epsilon_decay: float = self.config.DQN.epsilon_decay
         self.batch_size: int = self.config.DQN.batch_size
         self.C:int = self.config.DQN.C
+        self.count = 0
 
         #enviroment vars
         self.action_space: int = action_space
@@ -95,7 +96,7 @@ class DQN_Network():
         self.target_network.load_state_dict(self.policy_network.state_dict())
         self.policy_network.train()
         self.target_network.train()
-        wandb.watch(self.policy_network, log_freq=100)
+        wandb.watch(self.policy_network, log_freq=1000)
 
         self.init_optimizer()
 
@@ -108,10 +109,11 @@ class DQN_Network():
         else:
             with torch.no_grad():
                 action = self.policy_network(state.to(self.device).unsqueeze(0)).max(1).indices.view(1, 1)
-                wandb.log({"Action": action})
+                #wandb.log({"Action": action})
                 return action
             
     def minibatch_update(self) -> None:
+        self.count += 1
         if len(self.memory) < self.batch_size:
             return
         
@@ -128,26 +130,15 @@ class DQN_Network():
         reward_batch = torch.tensor(batch.reward, device=self.device).float()
         
         state_action_values = self.policy_network(state_batch).gather(1, action_batch)
-
-        wandb.log({
-            "q_value_mean": state_action_values.mean().item(),
-            "q_value_max": state_action_values.max().item(),
-            "q_value_min": state_action_values.min().item(),
-        })
         
         next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_network(non_final_next_states).max(1).values
         expected_state_action_values = (next_state_values * self.gamma) + reward_batch    
 
-        td_error = (expected_state_action_values - state_action_values).detach()
-        wandb.log({
-            "td_error_mean": td_error.mean().item(),
-            "td_error_max": td_error.max().item(),
-            "td_error_min": td_error.min().item(),
-        })    
+        td_error = (expected_state_action_values - state_action_values).detach()  
 
-        criterion = nn.SmoothL1Loss()
+        criterion = nn.HuberLoss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
         self.optimizer.zero_grad()
@@ -155,8 +146,16 @@ class DQN_Network():
         torch.nn.utils.clip_grad_value_(self.policy_network.parameters(), self.config.DQN.grad_clip_val)
         self.optimizer.step()    
 
-        wandb.log({"loss": loss,
-                   "Epsilon":self.epsilon})
+        if self.count % self.config.ENV.log_freq == 0:
+            wandb.log({"loss": loss,
+                    "Epsilon":self.epsilon,
+                    "td_error_mean": td_error.mean().item(),
+                    "td_error_max": td_error.max().item(),
+                    "td_error_min": td_error.min().item(),
+                    "q_value_mean": state_action_values.mean().item(),
+                    "q_value_max": state_action_values.max().item(),
+                    "q_value_min": state_action_values.min().item()
+                    })
 
     def update_target_network(self) -> None:
         self.target_network.load_state_dict(self.policy_network.state_dict())

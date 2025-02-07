@@ -3,13 +3,13 @@ DQN:
   epsilon: 1.0
   epsilon_min: 0.1
   epsilon_decay: 0.00001
-  batch_size: 128
+  batch_size: 32
   C: 10_000
   num_episodes: 10_000
-  grad_clip_val: 10
+  grad_clip_val: 1
 
 Optimizer:
-    alpha: 0.0001
+    alpha: 0.00025
     squared_gradient_momentum: 0.95
     min_squared_gradient: 0.01
     gradient_momentum: 0.95
@@ -19,6 +19,7 @@ ENV:
   plot_rewards_bool: False
   reward_clip: True
   repeat: 4
+  log_freq: 100
 
 MemoryReplay:
   max_memory: 1_000_000

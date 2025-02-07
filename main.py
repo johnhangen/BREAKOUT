@@ -28,8 +28,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 np.random.seed(0)
 torch.manual_seed(0)
 
-print(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
-
 def main():
     config = Config.load_config("configs/starting_params.yaml")
 
@@ -40,6 +38,7 @@ def main():
     # init DQN
     input_shape = env.convert_observation().shape[0]
     n_actions = env.get_action_space().n
+    #env.get_action_mappings()
 
     # TODO: this needs to be updated to reflect all params and if we are using wandb
     wandb.init(
@@ -103,11 +102,11 @@ def main():
 
         wandb.log({
             "episode_reward": running_rewards, 
-            "episode": i,
-            "memory_len":len(memory)
+            "episode": i
+            #"memory_len":len(memory)
             })
 
-        if i % 10 == 0 and i != 0:
+        if i % 100 == 0 and i != 0:
             print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
             if running_rewards > highest_reward:
                 highest_reward = running_rewards

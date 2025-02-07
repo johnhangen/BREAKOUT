@@ -90,6 +90,10 @@ class BreakoutEnvAgent():
 
     def get_action_space(self) -> gym.spaces.Discrete:
         return self.env.action_space
+    
+    def get_action_mappings(self) -> None:
+        '''Assert actions needed'''
+        print(self.env.unwrapped.get_action_meanings())
 
     def get_observation_space(self) -> gym.spaces.Box:
         return self.env.observation_space
@@ -103,8 +107,9 @@ class BreakoutEnvAgent():
     def step(self, action: int) -> tuple:
         total_reward = 0
 
-        self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
-        total_reward += self.reward
+        for _ in range(self.config.ENV.repeat):
+            self.observation, self.reward, self.terminated, self.truncated, self.info = self.env.step(action)
+            total_reward += self.reward
 
         obs_tensor = torch.tensor(self.observation, dtype=torch.float32).permute(2, 0, 1)
         obs_transformed = self.transform(obs_tensor)

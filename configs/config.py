@@ -26,6 +26,7 @@ class ENVConfig:
     plot_rewards_bool: bool = False
     reward_clip: bool = True
     repeat: int = 4
+    log_freq: int = 100
 
 @dataclass
 class MemoryReplayConfig:
