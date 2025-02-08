@@ -1,0 +1,16 @@
+gym==0.26.2
+matplotlib==3.7.2
+numpy==1.24.4
+numpy==1.24.3
+numpy==1.23.5
+pandas==2.0.3
+PyYAML==5.4.1
+PyYAML==6.0.1
+PyYAML==6.0.2
+PyYAML==6.0.2
+skimage==0.0
+torch==2.4.1
+torch==2.5.1
+torchvision==0.19.1
+torchvision==0.20.0
+torchvision==0.20.1
