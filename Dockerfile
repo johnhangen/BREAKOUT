@@ -18,6 +18,4 @@ RUN pip install scikit-image
 RUN pip install wandb
 RUN pip install --force-reinstall -v numpy==1.23.5 
 
-RUN python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
-
 CMD ["/bin/bash"]

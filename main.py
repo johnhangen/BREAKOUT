@@ -6,20 +6,15 @@
 
 #############################################
 
-from src.DQN import DQN_Network
+from src.Model.DQN import DQN_Network
 from src.breakout_env import BreakoutEnvAgent
-from src.UniformExperienceReplay import UniformExperienceReplay
-from src.PriorityExperienceReplay import PriorityExperienceReplay
+from src.ExperienceReplay.UniformExperienceReplay import UniformExperienceReplay
+from src.ExperienceReplay.PriorityExperienceReplay import PriorityExperienceReplay
 
 from configs.config import Config
 import wandb
-
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-
 import torch 
-
 import time
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -57,7 +52,7 @@ def main():
             "input_shape": input_shape,
             "Device": torch.device("cuda" if torch.cuda.is_available() else "cpu")
         },
-        #mode="disabled",
+        mode="disabled",
     )
 
     dqn = DQN_Network(n_actions, input_shape, config)
@@ -80,7 +75,9 @@ def main():
 
         running_rewards = 0.0
         
+        cnt = 0
         while True:
+            cnt += 1
             c += 1
             A = dqn.get_action(S)
 
@@ -108,7 +105,7 @@ def main():
             })
 
         if i % 100 == 0 and i != 0:
-            print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}")
+            print(f"Episode: {i}, Epsilon: {round(dqn.epsilon, 4)}, HIGH RW: {highest_reward}")
             if running_rewards > highest_reward:
                 highest_reward = running_rewards
                 dqn.save_policy_network("model/DQN_policy.pt")

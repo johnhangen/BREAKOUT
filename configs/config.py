@@ -22,7 +22,7 @@ class OptimizerConfig:
 @dataclass
 class ENVConfig:
     seed: int = 42
-    render_mode = None
+    render_mode = 'human'
     plot_rewards_bool: bool = False
     reward_clip: bool = True
     repeat: int = 4

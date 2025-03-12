@@ -6,20 +6,17 @@
 
 #############################################
 
-from src.DQN import DQN_Network
+from src.Model.DQN import DQN_Network
 from src.breakout_env import BreakoutEnvAgent
-from src.ExperienceReplay import MemoryReplay
+from src.ExperienceReplay.UniformExperienceReplay import UniformExperienceReplay
+from src.ExperienceReplay.PriorityExperienceReplay import PriorityExperienceReplay
 
 from configs.config import Config
 import wandb
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 import torch
-
-import time
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
@@ -35,7 +32,7 @@ def main():
 
     # init environment
     env = BreakoutEnvAgent(
-        render_mode="human"
+        config=config
     )
     env.init_environment()
 
@@ -51,11 +48,11 @@ def main():
     dqn.init_networks()
 
     # init replay memory
-    memory = MemoryReplay(max_memory=max_memory)
+    memory = UniformExperienceReplay(config=config)
     dqn.init_memory_replay(memory)
 
-    dqn.load_policy_network("model\DQN_policy.pt")
-    dqn.load_target_network("model\DQN_target.pt")
+    dqn.load_policy_network("model\DQN_policy (1).pt")
+    dqn.load_target_network("model\DQN_target (1).pt")
 
     _ = env.reset()
     S = env.convert_observation()
@@ -66,8 +63,14 @@ def main():
 
         running_rewards = 0
         
+        cnt = 0
         while True:
+            cnt += 1
             A = dqn.get_action(S)
+
+            if cnt < 60:
+                file_path = f'figs/breakout_screenshot_{cnt}.png'
+                env.screenshot(file_path=file_path)
 
             S_prime, R, _, _, _ = env.step(A)
             S_prime = env.convert_observation()

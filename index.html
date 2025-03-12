@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DQN Breakout Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --text: #1f2937;
+            --background: #ffffff;
+            --secondary-bg: #f3f4f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--background);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 4rem 0;
+            background: var(--secondary-bg);
+        }
+
+        .demo-gif {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin: 2rem 0 1rem;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        .section {
+            margin: 4rem 0;
+            padding: 2rem;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+        }
+
+        .performance-graphs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .graph {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        code {
+            background: #2d3748;
+            color: #fff;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Deep Q-Network for Atari Breakout</h1>
+            <img src="figs/breakout.gif" alt="DQN playing Breakout" class="demo-gif">
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="section">
+            <h2>Project Overview</h2>
+            <p>This project began as an extension of Reinforcement Learning coursework at Georgia Tech, aiming to reimplement and expand upon DeepMind's groundbreaking paper "Human-level control through deep reinforcement learning" (Nature, 2015). The focus is on mastering the Atari Breakout game using Deep Q-Learning, with plans to incorporate innovations from the Rainbow DQN paper.</p>
+        </section>
+
+        <section class="section">
+            <h2>Technical Background</h2>
+            <h3>Deep Q-Learning</h3>
+            <p>Deep Q-Learning (DQN) represents a significant advancement in reinforcement learning by combining Q-learning with deep neural networks. The algorithm learns a value function Q(s,a) that maps state-action pairs to expected cumulative rewards. The key innovation lies in its ability to handle high-dimensional state spaces through:</p>
+            <ul>
+                <li>Experience Replay: Storing and randomly sampling transitions to break temporal correlations and improve sample efficiency</li>
+                <li>Target Networks: Using a separate network for generating target values to enhance training stability</li>
+                <li>Frame Stacking: Processing multiple consecutive frames to capture temporal dynamics</li>
+            </ul>
+            
+            <h3>Mathematical Framework</h3>
+            <p>The DQN optimizes the Bellman equation:</p>
+            <p>Q(s,a) = E[r + γ max<sub>a'</sub> Q(s',a')]</p>
+            <p>where γ is the discount factor, r is the immediate reward, and s' is the next state. The network is trained to minimize the temporal difference error:</p>
+            <p>L = (r + γ max<sub>a'</sub> Q(s',a') - Q(s,a))²</p>
+        </section>
+
+        <section class="section">
+            <h2>Implementation Details</h2>
+            <p>The current implementation includes:</p>
+            <ul>
+                <li>Uniform Experience Replay</li>
+                <li>Prioritized Experience Replay</li>
+                <li>Target Network Updates</li>
+                <li>ε-greedy Exploration Strategy</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Performance Analysis</h2>
+            <div class="performance-graphs">
+                <div class="graph">
+                    <h3>Average Reward</h3>
+                    <img src="figs/REW.png" alt="Average Reward" class="graph-image" style="width: 100%; height: auto;">
+                </div>
+                <div class="graph">
+                    <h3>Loss Over Time</h3>
+                    <img src="figs/LOSS.png" alt="Loss Over Time" class="graph-image" style="width: 100%; height: auto;">
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Future Work</h2>
+            <p>Planned improvements include implementing additional components from the Rainbow DQN paper:</p>
+            <ul>
+                <li>Double DQN</li>
+                <li>Dueling Networks</li>
+                <li>Multi-step Learning</li>
+                <li>Distributional RL</li>
+                <li>Noisy Networks</li>
+            </ul>
+            <p>These enhancements will be systematically implemented and evaluated to understand their individual and combined effects on performance.</p>
+        </section>
+    </main>
+
+    <footer class="container">
+        <p>Created by Jack Hangen | <a href="https://github.com/johnhangen/BREAKOUT">GitHub Repository</a></p>
+    </footer>
+</body>
+</html> 

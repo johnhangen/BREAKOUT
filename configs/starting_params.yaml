@@ -19,7 +19,7 @@ ENV:
   plot_rewards_bool: False
   reward_clip: True
   repeat: 4
-  log_freq: 100
+  log_freq: 1000
 
 MemoryReplay:
   max_memory: 1_000_000

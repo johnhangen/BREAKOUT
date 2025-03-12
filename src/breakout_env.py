@@ -10,11 +10,8 @@
 
 # Required Libraries
 import gym
-from gym.utils.play import play
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Union
-from skimage.transform import resize
 import torchvision.transforms as T
 import torch
 import wandb
@@ -42,6 +39,7 @@ class BreakoutEnvAgent():
         # make the environment
         self._seed: int = self.config.ENV.seed
         self.render_mode: bool = self.config.ENV.render_mode
+        self.epsilon = config.DQN.epsilon
 
         # image inits
         self.observation_queue = torch.zeros(4, 84, 84)
